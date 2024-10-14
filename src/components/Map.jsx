@@ -23,8 +23,31 @@ function ChangeMapView({ coordinates }) {
   return null;
 }
 
+// Custom hook to detect window width
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+};
+
 const Map = ({ coordinates }) => {
   const [mapKey, setMapKey] = useState(0);
+  const size = useWindowSize(); // Get the window size
 
   useEffect(() => {
     setMapKey(prev => prev + 1);
@@ -34,14 +57,17 @@ const Map = ({ coordinates }) => {
     ? [coordinates.lat, coordinates.lng]
     : [51.505, -0.09];
 
+  // Hide zoom control on mobile (width < 768px)
+  const isMobile = size.width < 768;
+
   return (
-    <div className="w-full h-[50vh] md:h-[60vh] lg:h-[70vh] mt-4 md:mt-8 z-0">
+    <div className="w-full h-[75vh] md:h-[70vh] lg:h-[61vh] z-0 absolute overflow-hidden">
       <MapContainer
         key={mapKey}
         center={position}
         zoom={13}
         style={{ height: '100%', width: '100%' }}
-        zoomControl={false}
+        zoomControl={!isMobile} // Disable zoom control on mobile
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -55,7 +81,7 @@ const Map = ({ coordinates }) => {
         <ChangeMapView coordinates={coordinates} />
       </MapContainer>
     </div>
-  )
-}
+  );
+};
 
 export default Map;
